@@ -7,6 +7,14 @@ import { BellDot, Clock10 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Event {
   title: string;
@@ -43,6 +51,7 @@ const initialEventTitles: string[] = [
 export default function Home() {
   const [selectedEvents, setSelectedEvents] = useState<Event[]>([]);
   const [eventTitles, setEventTitles] = useState<string[]>(initialEventTitles);
+  const [selectedName, setSelectedName] = useState<string>("Select a name");
 
   const handleEventAction = async (
     endpoint: string,
@@ -51,7 +60,9 @@ export default function Home() {
     errorMessage: string
   ) => {
     try {
-      const res = await fetch(endpoint, {
+      // Modify endpoint to include selectedName as query parameter
+      const url = `${endpoint}?name=${encodeURIComponent(selectedName)}`;
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -65,6 +76,11 @@ export default function Home() {
   };
 
   const addEvents = async () => {
+    if (selectedName === "Select a name") {
+      toast.error("Please select a name first!");
+      return;
+    }
+
     const allEvents = eventTitles.map((title, index) => {
       const formattedTime = `${String(index).padStart(2, "0")}:00`;
       return {
@@ -82,7 +98,7 @@ export default function Home() {
     );
 
     await handleEventAction(
-      "/api/events",
+      "/api/event-sheets",
       { action: "addAll", events: allEvents },
       "All events added successfully!",
       "Failed to add all events!"
@@ -90,9 +106,14 @@ export default function Home() {
   };
 
   const removeEvents = async () => {
-    setSelectedEvents([]); // Clear selected events from state
+    if (selectedName === "Select a name") {
+      toast.error("Please select a name first!");
+      return;
+    }
+
+    setSelectedEvents([]);
     await handleEventAction(
-      "/api/events",
+      "/api/event-sheets",
       { action: "removeAll" },
       "All events removed successfully!",
       "Failed to remove all events!"
@@ -139,13 +160,38 @@ export default function Home() {
                   value={title}
                   onChange={(e) => handleTitleChange(index, e.target.value)}
                   onBlur={(e) => handleTitleChange(index, e.target.value)}
+                  readOnly={false} // Ensure the input is editable
                 />
               </CardContent>
             </Card>
           );
         })}
       </div>
-      <div className="flex gap-4 justify-end mt-4">
+      <div className="flex gap-4 justify-end mt-4 items-center">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">{selectedName}</Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56">
+            <DropdownMenuLabel>Select Name</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => setSelectedName("Achal")}>
+              Achal
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSelectedName("Neeraj")}>
+              Neeraj
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSelectedName("Salman")}>
+              Salman
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSelectedName("Vivek")}>
+              Vivek
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSelectedName("Jyoti")}>
+              Jyoti
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Button variant="default" onClick={addEvents}>
           Add All Events
         </Button>
